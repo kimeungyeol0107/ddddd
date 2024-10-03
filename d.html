@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>티켓 예매 연습</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .timer {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .random-code, .queue-number, .seat-grid {
+            margin: 20px 0;
+        }
+        .seat-grid {
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            grid-gap: 5px;
+        }
+        .seat {
+            width: 20px;
+            height: 20px;
+            background-color: lightgray;
+        }
+        .seat.completed {
+            background-color: red;
+        }
+        .seat.pending {
+            background-color: green;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>티켓 예매 연습 사이트</h1>
+
+    <div class="timer">1분 타이머: <span id="timer">60</span>초</div>
+    <div class="random-code">랜덤 코드: <span id="randomCode">?????</span></div>
+    <div class="queue-number">대기 순번: <span id="queueNumber">????</span></div>
+
+    <input type="text" id="userInput" placeholder="랜덤 코드 입력">
+    <button id="submitCode">제출</button>
+
+    <div class="seat-grid" id="seatGrid"></div>
+
+    <script>
+        let timeLeft = 60;
+        let timerInterval;
+        let seatInterval;
+        let queueNumber;
+        let seats = [];
+        let seatStatusChangeSpeed = 100; // 0.1초에 1개 변경
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").innerText = timeLeft;
+                if (timeLeft === 0) {
+                    clearInterval(timerInterval);
+                    generateRandomCode();
+                }
+            }, 1000);
+        }
+
+        function generateRandomCode() {
+            const randomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+            document.getElementById("randomCode").innerText = randomCode;
+            queueNumber = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;
+            document.getElementById("queueNumber").innerText = queueNumber;
+
+            document.getElementById("submitCode").addEventListener("click", function () {
+                const userCode = document.getElementById("userInput").value.toUpperCase();
+                if (userCode === randomCode) {
+                    startQueueCountdown();
+                    generateSeats();
+                } else {
+                    alert("잘못된 코드입니다. 다시 시도하세요!");
+                }
+            });
+        }
+
+        function startQueueCountdown() {
+            const queueInterval = setInterval(() => {
+                queueNumber -= 30;
+                document.getElementById("queueNumber").innerText = queueNumber;
+                if (queueNumber <= 0) {
+                    clearInterval(queueInterval);
+                }
+            }, 1000);
+        }
+
+        function generateSeats() {
+            const seatGrid = document.getElementById("seatGrid");
+            seatGrid.innerHTML = ""; // 초기화
+            seats = [];
+
+            for (let i = 0; i < 200; i++) {
+                const seat = document.createElement("div");
+                seat.classList.add("seat", "pending");
+                seatGrid.appendChild(seat);
+                seats.push(seat);
+            }
+
+            seatInterval = setInterval(() => {
+                let randomSeat = Math.floor(Math.random() * seats.length);
+                seats[randomSeat].classList.remove("pending");
+                seats[randomSeat].classList.add("completed");
+
+                if (!seats.some(seat => seat.classList.contains("pending"))) {
+                    clearInterval(seatInterval);
+                    alert("모든 좌석이 완료되었습니다. 실패!");
+                    resetGame();
+                }
+            }, seatStatusChangeSpeed);
+        }
+
+        function resetGame() {
+            timeLeft = 60;
+            document.getElementById("timer").innerText = timeLeft;
+            document.getElementById("randomCode").innerText = "?????";
+            document.getElementById("queueNumber").innerText = "????";
+            document.getElementById("userInput").value = "";
+            clearInterval(timerInterval);
+            clearInterval(seatInterval);
+            startTimer();
+        }
+
+        startTimer();
+    </script>
+
+</body>
+</html>
